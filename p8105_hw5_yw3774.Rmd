@@ -1,0 +1,77 @@
+---
+title: "p8105_hw5_yw3774"
+author: "Yida Wang"
+date: "11/12/2021"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(rvest)
+library(knitr)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+## problem 1
+```{r}
+
+url_1 = "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
+homic = read_csv(url_1)
+
+```
+### summary
+* Let's create a variable contains city and state
+* Then summarize the total number of homicides and unsolved homicides
+```{r}
+city_state_homic = homic %>% 
+  unite(city_state, c("city", "state"), sep = ", ") %>% 
+  group_by(city_state) %>% 
+  summarise(total_homic = n(),
+            total_unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")))
+city_state_homic
+```
+
+For the city of Baltimore, MD, do the two-side test to get estimated proportion and 95% confidence interval.
+
+```{r }
+balt_md = city_state_homic %>% 
+  filter(city_state == "Baltimore, MD") 
+result_prop = 
+  prop.test(x = pull(balt_md, total_unsolved),
+            n = pull(balt_md, total_homic)) %>% 
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+```
+
+Now for all the cities
+
+```{r}
+homicide_all =
+  city_state_homic %>% 
+  mutate(prop_test = map2(.x = total_unsolved, .y = total_homic, ~prop.test(x = .x, n = .y)),
+         tidy_test = map(.x = prop_test, ~broom::tidy(.x))) %>% 
+  select(-prop_test) %>% 
+  unnest(tidy_test) %>%
+  select(city_state, estimate, conf.low, conf.high)
+```
+
+```{r}
+homicide_all %>% 
+  arrange(desc(estimate)) %>%
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  coord_flip() +
+  labs(x = "City",
+       y = "Estimated Proportion of Unsolved Homicides",
+       title = "Estimates of Unsolved Homicide Proportions") +
+   theme(axis.text.x = element_text(vjust = 0.5, hjust = 0.5))
+```
+```
+
