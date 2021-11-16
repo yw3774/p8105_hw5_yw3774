@@ -26,6 +26,7 @@ homic = read_csv(url_1)
 
 ```
 ### summary
+This dataset contains `r nrow(homic)` homicides conditions in 50 large U.S. cities with `r ncol(homic)` variables. 
 * Let's create a variable contains city and state
 * Then summarize the total number of homicides and unsolved homicides
 ```{r}
@@ -34,7 +35,7 @@ city_state_homic = homic %>%
   group_by(city_state) %>% 
   summarise(total_homic = n(),
             total_unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest")))
-city_state_homic
+knitr::kable(city_state_homic)
 ```
 
 For the city of Baltimore, MD, do the two-side test to get estimated proportion and 95% confidence interval.
@@ -49,7 +50,7 @@ result_prop =
   select(estimate, conf.low, conf.high)
 ```
 
-Now for all the cities
+Now for all the cities:
 
 ```{r}
 homicide_all =
@@ -61,9 +62,13 @@ homicide_all =
   select(city_state, estimate, conf.low, conf.high)
 ```
 
+Create a plot to show the results:
+
 ```{r}
 homicide_all %>% 
-  arrange(desc(estimate)) %>%
+  mutate(
+    city_state = fct_reorder(city_state, estimate)
+  ) %>%
   ggplot(aes(x = city_state, y = estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
@@ -73,5 +78,73 @@ homicide_all %>%
        title = "Estimates of Unsolved Homicide Proportions") +
    theme(axis.text.x = element_text(vjust = 0.5, hjust = 0.5))
 ```
+
+# problem 2
+```{r}
+data_path = str_c("data/", list.files(path = "data/."))
+
+new_data = tibble(
+  files_names = list.files(path = "data/."),
+  participants = purrr::map(data_path, read_csv) 
+) %>% 
+  separate(files_names, into = c("arm","ID"), sep = "_") %>% 
+  separate(col = "ID", into = c("id", "csv")) %>%
+  mutate(
+    arm = recode(arm, con = "control", exp = "experiment" )
+    ) %>% 
+  select(-csv) %>% 
+  unnest(participants) %>%
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "observations"
+  ) %>% 
+  mutate(week = as.numeric(week)) %>%
+  mutate(arm = as.factor(arm))
+  
+new_data
+  
+```
+Make a plot for observations 
+```{r}
+new_data %>% 
+ ggplot(aes(x = week, y = observations, color = id)) +
+  facet_grid(. ~ arm) +
+  geom_line() +
+   labs(
+    title = "comparison between groups",
+    x = "week",
+    y = "value",
+    )
+```
+
+# problem 3
+
+
+```{r}
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+```
+* For numeric variables, you should fill in missing values with the mean of non-missing values
+* For character variables, you should fill in missing values with "virginica"
+```{r}
+replace = function(x) {
+  
+  if (is.numeric(x)) {
+   x = replace_na(x, mean(x, na.rm = TRUE))
+    }
+  else if (is.character(x)) {
+    x = replace_na(x, "virginica")
+  }
+}
+
+iris_missing_replace = map(iris_with_missing, replace)
+
+iris_missing_replace %>% 
+  as_tibble()
 ```
 
