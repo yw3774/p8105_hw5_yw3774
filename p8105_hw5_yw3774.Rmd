@@ -113,9 +113,9 @@ new_data %>%
   facet_grid(. ~ arm) +
   geom_line() +
    labs(
-    title = "comparison between groups",
-    x = "week",
-    y = "value"
+    title = "Comparison of Observarion Values Between Groups",
+    x = "Week",
+    y = "Value"
     )
 ```
 
