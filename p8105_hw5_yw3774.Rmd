@@ -26,7 +26,7 @@ homic = read_csv(url_1)
 
 ```
 ### summary
-This dataset contains `r nrow(homic)` homicides conditions in 50 large U.S. cities with `r ncol(homic)` variables. 
+This dataset contains `r nrow(homic)` homicides conditions in 50 large U.S. cities with `r ncol(homic)` variables. Missing values exist in victim_race, victim_age, victim_race, and geographical coordindates. Missing values were changed to N/A. 
 * Let's create a variable contains city and state
 * Then summarize the total number of homicides and unsolved homicides
 ```{r}
@@ -52,7 +52,7 @@ result_prop =
 
 Now for all the cities:
 
-```{r}
+```{r warning=FALSE}
 homicide_all =
   city_state_homic %>% 
   mutate(prop_test = map2(.x = total_unsolved, .y = total_homic, ~prop.test(x = .x, n = .y)),
@@ -74,8 +74,8 @@ homicide_all %>%
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
   coord_flip() +
   labs(x = "City",
-       y = "Estimated Proportion of Unsolved Homicides",
-       title = "Estimates of Unsolved Homicide Proportions") +
+       y = "Proportion",
+       title = "95% Confidence interval and Estimated Proportion \n of Unsolved Homicides Cases in Each City") +
    theme(axis.text.x = element_text(vjust = 0.5, hjust = 0.5))
 ```
 
@@ -147,8 +147,13 @@ replace = function(x) {
 
 iris_missing_replace = map(iris_with_missing, replace)
 
-iris_missing_replace %>% 
+new_iris = iris_missing_replace %>% 
   as_tibble()
 ```
 
+Check the result
+```{r}
+new_iris %>%
+  summarise_all(~ sum(is.na(.)))
+```
 
