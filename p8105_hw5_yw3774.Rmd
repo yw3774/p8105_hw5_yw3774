@@ -115,9 +115,12 @@ new_data %>%
    labs(
     title = "comparison between groups",
     x = "week",
-    y = "value",
+    y = "value"
     )
 ```
+
+From the plot, we can see that from week 1 to week 8, there was a significant trend of general increase of the observed value in the experimental group, which is from around 0-3.75 to 3.75-7. However, there is no significant trend of increase or decrease for the observed value in the control group as weeks passed. Observed values maintained around 0 to 2.5 from week 1 to week 8.
+
 
 # problem 3
 
@@ -147,4 +150,5 @@ iris_missing_replace = map(iris_with_missing, replace)
 iris_missing_replace %>% 
   as_tibble()
 ```
+
 
